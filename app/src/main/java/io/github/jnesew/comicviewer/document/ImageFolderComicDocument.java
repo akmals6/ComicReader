@@ -13,6 +13,8 @@ import io.github.jnesew.comicviewer.util.NaturalOrder;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -100,8 +102,8 @@ public final class ImageFolderComicDocument implements ComicDocument {
     @Override public long documentSize() { return size; }
     @Override public long documentModified() { return modified; }
     @Override public int count() { return sourcePages.size(); }
-    @Override public int indexedPages() { return pageInfo.size(); }
-    @Override public boolean isIndexComplete() { return true; }
+    @Override public int indexedPages() { return (int) pageInfo.stream().filter(p -> p.width > 1 || p.height > 1).count(); }
+    @Override public boolean isIndexComplete() { return indexedPages() == pageInfo.size(); }
     @Override public boolean suggestedRightToLeft() { return true; }
     @Override public SeriesMetadata seriesMetadata() { return SeriesMetadata.EMPTY; }
     @Override public List<PageInfo> pages() { return Collections.unmodifiableList(pageInfo); }
@@ -142,6 +144,32 @@ public final class ImageFolderComicDocument implements ComicDocument {
         } catch (SecurityException | IllegalArgumentException e) {
             throw new IOException("Cannot open image page " + sourcePages.get(index).name, e);
         }
+    }
+
+    @Override
+    public void extractPage(int index, File destination) throws IOException {
+        File parent = destination.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            throw new IOException("Cannot prepare a temporary image page.");
+        }
+        try (InputStream input = openPage(index);
+             FileOutputStream output = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[64 * 1024];
+            int read;
+            long total = 0;
+            while ((read = input.read(buffer)) != -1) {
+                total += read;
+                if (total > 128L * 1024L * 1024L) {
+                    throw new IOException("This image page exceeds the 128 MB safety limit.");
+                }
+                output.write(buffer, 0, read);
+            }
+        }
+    }
+
+    @Override
+    public void extractCover(File destination) throws IOException {
+        extractPage(0, destination);
     }
 
     @Override public void close() { closed = true; }
