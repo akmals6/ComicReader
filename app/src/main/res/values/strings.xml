@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Manga Shelf</string>
+    <string name="about_app">About Manga Shelf</string>
+    <string name="about_message">Manga Shelf is an offline comic and manga reader based on ComicViewer by jnesew.\n\nOriginal project: github.com/jnesew/ComicReader\nManga Shelf fork: github.com/akmals6/ComicReader\n\nThe original MIT license and third-party notices are preserved in this project.</string>
 
     <string name="library_title">Library</string>
     <string name="reader_retry">Retry</string>
