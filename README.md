@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="artwork/comicviewer-launcher-icon-512.png" alt="ComicViewer icon" width="128">
+  <img src="artwork/comicviewer-launcher-icon-512.png" alt="Manga Shelf icon" width="128">
 </p>
 
-# ComicViewer for Android
+# Manga Shelf for Android
 
-ComicViewer is a focused, offline comic reader for Android. It reads user-selected comics without
+Manga Shelf is a refreshed presentation of the open-source ComicViewer reader for Android. It keeps the original offline-first reading engine while giving the library a new Manga Shelf identity. It reads user-selected comics without
 accounts, ads, analytics, subscriptions, network access, or broad storage permissions.
 
 ## Highlights
@@ -42,7 +42,7 @@ Browse grouped libraries, read traditional pages or long strips, and tune the re
 
 ## Privacy by design
 
-ComicViewer requests no Android permissions, including no `INTERNET`, storage, or media permission.
+Manga Shelf requests no Android permissions, including no `INTERNET`, storage, or media permission.
 Files are opened through Android's system document picker, which grants access only to items the user
 chooses. The app has no Google Play Services, Firebase, advertising, analytics, telemetry, account,
 or third-party runtime library.
@@ -117,5 +117,4 @@ consistently single-image spine pages; ComicViewer is not a general reflowable e
 Contributions should preserve the app's narrow offline purpose and zero-permission runtime. See
 [CONTRIBUTING.md](CONTRIBUTING.md) and the [vulnerability-reporting policy](SECURITY.md).
 
-ComicViewer is free and open-source software under the [MIT License](LICENSE). Build-time and
-test-only components are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Manga Shelf is based on [jnesew/ComicReader](https://github.com/jnesew/ComicReader) and preserves its [MIT License](LICENSE). Original authorship and third-party attributions are retained. See [LICENSES.md](LICENSES.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
