@@ -93,6 +93,11 @@ public final class HomeView extends FrameLayout {
     private final TextView continueDetails;
     private final ProgressBar continueProgress;
     private final TextView continueAction;
+    private final LinearLayout bottomNavigation;
+    private final TextView libraryTab;
+    private final TextView historyTab;
+    private final TextView settingsTab;
+    private String activeTab = "library";
     private final Runnable hideFolderStatus;
     private final LinearLayout emptyState;
     private final TextView emptyTitle;
@@ -350,6 +355,27 @@ public final class HomeView extends FrameLayout {
         body.addView(emptyState, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        bottomNavigation = new LinearLayout(context);
+        bottomNavigation.setGravity(Gravity.CENTER);
+        bottomNavigation.setPadding(Ui.dp(context, 12), Ui.dp(context, 6),
+                Ui.dp(context, 12), Ui.dp(context, 6));
+        bottomNavigation.setBackgroundColor(Ui.SURFACE);
+        libraryTab = createNavigationTab(context, "▦  Library");
+        historyTab = createNavigationTab(context, "◷  History");
+        settingsTab = createNavigationTab(context, "⚙  Settings");
+        bottomNavigation.addView(libraryTab, new LinearLayout.LayoutParams(0,
+                Ui.dp(context, 48), 1f));
+        bottomNavigation.addView(historyTab, new LinearLayout.LayoutParams(0,
+                Ui.dp(context, 48), 1f));
+        bottomNavigation.addView(settingsTab, new LinearLayout.LayoutParams(0,
+                Ui.dp(context, 48), 1f));
+        libraryTab.setOnClickListener(view -> showLibraryTab());
+        historyTab.setOnClickListener(view -> showHistoryTab());
+        settingsTab.setOnClickListener(view -> listener.onLibraryMenuRequested(settingsTab));
+        chrome.addView(bottomNavigation, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        updateNavigationTabs();
+
         addButton = Ui.text(context, "＋", 32, Color.rgb(25, 29, 36));
         addButton.setGravity(Gravity.CENTER);
         addButton.setContentDescription(context.getString(R.string.library_add_comics_description));
@@ -367,6 +393,8 @@ public final class HomeView extends FrameLayout {
 
         setOnApplyWindowInsetsListener((view, insets) -> {
             chrome.setPadding(0, insets.getSystemWindowInsetTop(), 0, 0);
+            bottomNavigation.setPadding(Ui.dp(context, 12), Ui.dp(context, 6),
+                    Ui.dp(context, 12), Ui.dp(context, 6) + insets.getSystemWindowInsetBottom());
             FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) addButton.getLayoutParams();
             params.bottomMargin = Ui.dp(context, 22) + insets.getSystemWindowInsetBottom();
             addButton.setLayoutParams(params);
@@ -417,6 +445,48 @@ public final class HomeView extends FrameLayout {
         headerTitle.setText(selectedSeriesId > 0L ? selectedSeriesTitle :
                 getResources().getString(R.string.library_title));
         updateSelectorLabels();
+    }
+
+    private TextView createNavigationTab(Context context, String label) {
+        TextView tab = Ui.text(context, label, 12, Ui.TEXT_MUTED);
+        tab.setGravity(Gravity.CENTER);
+        tab.setSingleLine(true);
+        tab.setBackground(Ui.rounded(Color.TRANSPARENT, Ui.dp(context, 14), 0, 0));
+        tab.setClickable(true);
+        tab.setFocusable(true);
+        return tab;
+    }
+
+    private void showLibraryTab() {
+        activeTab = "library";
+        selectedSeriesId = 0L;
+        selectedSeriesTitle = "";
+        filter = LibraryDatabase.FILTER_ALL;
+        viewPreferences.edit().putString("filter", filter).apply();
+        updateNavigationTabs();
+        refresh();
+    }
+
+    private void showHistoryTab() {
+        activeTab = "history";
+        selectedSeriesId = 0L;
+        selectedSeriesTitle = "";
+        filter = LibraryDatabase.FILTER_READING;
+        sort = LibraryDatabase.SORT_RECENT;
+        viewPreferences.edit().putString("filter", filter).putString("sort", sort).apply();
+        updateNavigationTabs();
+        refresh();
+    }
+
+    private void updateNavigationTabs() {
+        libraryTab.setTextColor("library".equals(activeTab) ? Ui.ACCENT : Ui.TEXT_MUTED);
+        historyTab.setTextColor("history".equals(activeTab) ? Ui.ACCENT : Ui.TEXT_MUTED);
+        settingsTab.setTextColor(Ui.TEXT_MUTED);
+        libraryTab.setBackground(Ui.rounded("library".equals(activeTab)
+                ? Ui.SURFACE_HIGH : Color.TRANSPARENT, Ui.dp(getContext(), 14), 0, 0));
+        historyTab.setBackground(Ui.rounded("history".equals(activeTab)
+                ? Ui.SURFACE_HIGH : Color.TRANSPARENT, Ui.dp(getContext(), 14), 0, 0));
+        settingsTab.setBackground(Ui.rounded(Color.TRANSPARENT, Ui.dp(getContext(), 14), 0, 0));
     }
 
     private void bindContinueReading() {
