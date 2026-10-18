@@ -388,7 +388,7 @@ public final class HomeView extends FrameLayout {
         FrameLayout.LayoutParams addParams = new FrameLayout.LayoutParams(
                 Ui.dp(context, 68), Ui.dp(context, 68), Gravity.END | Gravity.BOTTOM);
         addParams.rightMargin = Ui.dp(context, 20);
-        addParams.bottomMargin = Ui.dp(context, 22);
+        addParams.bottomMargin = Ui.dp(context, 84);
         addView(addButton, addParams);
 
         setOnApplyWindowInsetsListener((view, insets) -> {
@@ -396,7 +396,7 @@ public final class HomeView extends FrameLayout {
             bottomNavigation.setPadding(Ui.dp(context, 12), Ui.dp(context, 6),
                     Ui.dp(context, 12), Ui.dp(context, 6) + insets.getSystemWindowInsetBottom());
             FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) addButton.getLayoutParams();
-            params.bottomMargin = Ui.dp(context, 22) + insets.getSystemWindowInsetBottom();
+            params.bottomMargin = Ui.dp(context, 84) + insets.getSystemWindowInsetBottom();
             addButton.setLayoutParams(params);
             grid.setPadding(Ui.dp(context, 16), Ui.dp(context, 4), Ui.dp(context, 16),
                     Ui.dp(context, 100) + insets.getSystemWindowInsetBottom());
