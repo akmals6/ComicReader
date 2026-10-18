@@ -2,6 +2,7 @@ package io.github.jnesew.comicviewer.document;
 
 import android.content.Context;
 import android.net.Uri;
+import android.provider.DocumentsContract;
 
 import io.github.jnesew.comicviewer.R;
 import io.github.jnesew.comicviewer.archive.ComicArchive;
@@ -15,7 +16,7 @@ import java.util.Locale;
 
 /** Detects supported comic containers without relying on a provider's MIME declaration alone. */
 public final class ComicDocumentFactory {
-    private enum Kind { ARCHIVE, EPUB, PDF }
+    private enum Kind { ARCHIVE, EPUB, PDF, IMAGE_FOLDER }
 
     private ComicDocumentFactory() {
     }
@@ -44,6 +45,9 @@ public final class ComicDocumentFactory {
             long cachedDocumentModified,
             ComicDocument.ProgressCallback callback) throws IOException {
         Kind kind = detect(context, uri, document);
+        if (kind == Kind.IMAGE_FOLDER) {
+            return ImageFolderComicDocument.open(context, uri, document);
+        }
         if (kind == Kind.PDF) {
             return PdfComicDocument.open(context, uri, document, preferredPage, cachedPages,
                     cachedDocumentSize, cachedDocumentModified, callback);
@@ -55,6 +59,10 @@ public final class ComicDocumentFactory {
     private static Kind detect(Context context, Uri uri, DocumentInfo document) throws IOException {
         String mime = document.mimeType.toLowerCase(Locale.ROOT);
         String name = document.displayName.toLowerCase(Locale.ROOT);
+        if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime) &&
+                DocumentsContract.isTreeUri(uri)) {
+            return Kind.IMAGE_FOLDER;
+        }
         byte[] header;
         IOException headerFailure = null;
         try {
