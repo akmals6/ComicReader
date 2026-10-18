@@ -3,6 +3,7 @@ name: Security and unsigned build
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -54,7 +55,7 @@ jobs:
         run: scripts/verify-source-security.sh
 
       - name: Test and build unsigned release
-        run: ./gradlew --no-daemon --dependency-verification strict testDebugUnitTest lintRelease assembleRelease
+        run: ./gradlew --no-daemon --dependency-verification strict testDebugUnitTest lintRelease assembleDebug assembleRelease
 
       - name: Verify Unicode database round-trip
         run: scripts/verify-database-roundtrip.sh
@@ -87,3 +88,13 @@ jobs:
 
       - name: Verify isolated reproducible builds
         run: scripts/verify-reproducible-build.sh
+
+      - name: Upload baseline APKs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: comicreader-baseline-apks
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 14
