@@ -38,6 +38,7 @@ public final class LibraryFolderScanner {
         public final String relativePath;
         public final String seriesFolderKey;
         public final String seriesFolderName;
+        public final boolean imageFolder;
 
         private Entry(
                 Uri treeUri,
@@ -49,7 +50,8 @@ public final class LibraryFolderScanner {
                 long modified,
                 String relativePath,
                 String seriesFolderKey,
-                String seriesFolderName) {
+                String seriesFolderName,
+                boolean imageFolder) {
             this.treeUri = treeUri.toString();
             this.documentId = documentId;
             this.uri = uri;
@@ -64,6 +66,7 @@ public final class LibraryFolderScanner {
             this.seriesFolderKey = seriesFolderKey;
             this.seriesFolderName = InputLimits.normalizeText(
                     seriesFolderName, InputLimits.MAX_SERIES_CODE_POINTS);
+            this.imageFolder = imageFolder;
         }
 
         public String sourceIdentity() {
@@ -138,6 +141,9 @@ public final class LibraryFolderScanner {
                 continue;
             }
 
+            long folderImageBytes = 0L;
+            long folderImageModified = -1L;
+            int folderImageCount = 0;
             try (Cursor cursor = resolver.query(children, projection, null, null, null)) {
                 if (cursor == null) {
                     summary.providerErrors++;
@@ -190,6 +196,16 @@ public final class LibraryFolderScanner {
                                 seriesKey, seriesName));
                         continue;
                     }
+                    if (isImageName(displayName, mimeType)) {
+                        long imageSize = longValue(cursor, sizeColumn);
+                        if (imageSize > 0L && folderImageBytes <= Long.MAX_VALUE - imageSize) {
+                            folderImageBytes += imageSize;
+                        }
+                        folderImageModified = Math.max(
+                                folderImageModified, longValue(cursor, modifiedColumn));
+                        folderImageCount++;
+                        continue;
+                    }
                     if (!ComicDocumentFactory.isSupportedHint(displayName, mimeType)) continue;
                     Uri documentUri;
                     try {
@@ -203,7 +219,20 @@ public final class LibraryFolderScanner {
                     visitor.onComic(new Entry(
                             treeUri, documentId, documentUri, displayName, mimeType,
                             longValue(cursor, sizeColumn), longValue(cursor, modifiedColumn),
-                            relativePath, folder.seriesFolderKey, folder.seriesFolderName));
+                            relativePath, folder.seriesFolderKey, folder.seriesFolderName, false));
+                }
+                if (folderImageCount > 0 && !folder.relativePath.isEmpty()) {
+                    Uri folderUri = DocumentsContract.buildDocumentUriUsingTree(
+                            treeUri, folder.documentId);
+                    String folderName = folder.relativePath;
+                    int slash = folderName.lastIndexOf('/');
+                    if (slash >= 0) folderName = folderName.substring(slash + 1);
+                    summary.supportedFiles++;
+                    visitor.onComic(new Entry(
+                            treeUri, folder.documentId, folderUri, folderName,
+                            DocumentsContract.Document.MIME_TYPE_DIR,
+                            folderImageBytes, folderImageModified, folder.relativePath,
+                            folder.seriesFolderKey, folder.seriesFolderName, true));
                 }
             } catch (SecurityException | IllegalArgumentException exception) {
                 summary.providerErrors++;
@@ -213,6 +242,15 @@ public final class LibraryFolderScanner {
         }
         summary.cancelled = cancellation.isCancelled();
         return summary;
+    }
+
+    private static boolean isImageName(String name, String mimeType) {
+        String lower = name == null ? "" : name.toLowerCase(java.util.Locale.ROOT);
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg") ||
+                lower.endsWith(".png") || lower.endsWith(".webp") ||
+                lower.endsWith(".gif") || lower.endsWith(".bmp")) return true;
+        String mime = mimeType == null ? "" : mimeType.toLowerCase(java.util.Locale.ROOT);
+        return mime.startsWith("image/") && !lower.isEmpty();
     }
 
     private static String value(Cursor cursor, int column) {
