@@ -515,6 +515,14 @@ public final class MainActivity extends Activity implements
             showReaderOptions();
             return true;
         });
+        menu.getMenu().add(R.string.about_app).setOnMenuItemClickListener(item -> {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.about_app)
+                    .setMessage(R.string.about_message)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+            return true;
+        });
         menu.show();
     }
 
