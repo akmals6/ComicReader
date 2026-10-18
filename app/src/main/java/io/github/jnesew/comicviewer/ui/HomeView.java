@@ -87,6 +87,12 @@ public final class HomeView extends FrameLayout {
     private final TextView viewButton;
     private final TextView folderStatus;
     private final TextView collectionCount;
+    private final LinearLayout continueCard;
+    private final ImageView continueCover;
+    private final TextView continueTitle;
+    private final TextView continueDetails;
+    private final ProgressBar continueProgress;
+    private final TextView continueAction;
     private final Runnable hideFolderStatus;
     private final LinearLayout emptyState;
     private final TextView emptyTitle;
@@ -215,6 +221,65 @@ public final class HomeView extends FrameLayout {
         chrome.addView(controls, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        continueCard = new LinearLayout(context);
+        continueCard.setOrientation(LinearLayout.HORIZONTAL);
+        continueCard.setGravity(Gravity.CENTER_VERTICAL);
+        continueCard.setPadding(Ui.dp(context, 12), Ui.dp(context, 12),
+                Ui.dp(context, 14), Ui.dp(context, 12));
+        continueCard.setBackground(Ui.rounded(Ui.SURFACE, Ui.dp(context, 18),
+                Ui.SURFACE_HIGH, Ui.dp(context, 1)));
+        continueCard.setVisibility(GONE);
+        continueCard.setClickable(true);
+        continueCard.setFocusable(true);
+        continueCover = new ImageView(context);
+        continueCover.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        continueCover.setClipToOutline(true);
+        continueCover.setBackground(Ui.rounded(Ui.SURFACE_HIGH, Ui.dp(context, 10), 0, 0));
+        continueCard.addView(continueCover, new LinearLayout.LayoutParams(
+                Ui.dp(context, 58), Ui.dp(context, 78)));
+        LinearLayout continueText = new LinearLayout(context);
+        continueText.setOrientation(LinearLayout.VERTICAL);
+        continueText.setPadding(Ui.dp(context, 12), 0, Ui.dp(context, 8), 0);
+        continueText.setGravity(Gravity.CENTER_VERTICAL);
+        TextView continueLabel = Ui.text(context, "CONTINUE READING", 10, Ui.ACCENT);
+        Ui.bold(continueLabel);
+        continueLabel.setLetterSpacing(0.1f);
+        continueText.addView(continueLabel, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(context, 18)));
+        continueTitle = Ui.text(context, "", 15, Ui.TEXT);
+        Ui.bold(continueTitle);
+        continueTitle.setMaxLines(2);
+        continueTitle.setEllipsize(TextUtils.TruncateAt.END);
+        continueText.addView(continueTitle, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        continueDetails = Ui.text(context, "", 12, Ui.TEXT_MUTED);
+        continueDetails.setSingleLine(true);
+        continueDetails.setEllipsize(TextUtils.TruncateAt.END);
+        continueText.addView(continueDetails, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(context, 22)));
+        continueProgress = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
+        continueProgress.setMax(100);
+        continueProgress.setProgressTintList(ColorStateList.valueOf(Ui.ACCENT));
+        continueProgress.setProgressBackgroundTintList(ColorStateList.valueOf(Ui.SURFACE_HIGH));
+        continueText.addView(continueProgress, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(context, 3)));
+        continueCard.addView(continueText, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        continueAction = Ui.text(context, "RESUME  ›", 11, Ui.ACCENT);
+        Ui.bold(continueAction);
+        continueCard.addView(continueAction, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(context, 42)));
+        continueCard.setOnClickListener(view -> {
+            Object tag = continueCard.getTag();
+            if (tag instanceof ReadingProgress item) listener.onRecentRequested(item);
+        });
+        LinearLayout.LayoutParams continueParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        continueParams.leftMargin = Ui.dp(context, 16);
+        continueParams.rightMargin = Ui.dp(context, 16);
+        continueParams.bottomMargin = Ui.dp(context, 12);
+        chrome.addView(continueCard, continueParams);
+
         LinearLayout collectionHeader = new LinearLayout(context);
         collectionHeader.setGravity(Gravity.CENTER_VERTICAL);
         collectionHeader.setPadding(Ui.dp(context, 18), Ui.dp(context, 2), Ui.dp(context, 18), Ui.dp(context, 10));
@@ -334,6 +399,7 @@ public final class HomeView extends FrameLayout {
             seriesRows = Collections.emptyList();
         }
         adapter.notifyDataSetChanged();
+        bindContinueReading();
         boolean empty = showingSeriesGrid() ? seriesRows.isEmpty() : rows.isEmpty();
         int visibleCount = showingSeriesGrid() ? seriesRows.size() : rows.size();
         collectionCount.setText(visibleCount + (visibleCount == 1 ? " TITLE" : " TITLES"));
@@ -351,6 +417,30 @@ public final class HomeView extends FrameLayout {
         headerTitle.setText(selectedSeriesId > 0L ? selectedSeriesTitle :
                 getResources().getString(R.string.library_title));
         updateSelectorLabels();
+    }
+
+    private void bindContinueReading() {
+        List<ReadingProgress> inProgress = database.library(
+                "", LibraryDatabase.SORT_RECENT, LibraryDatabase.FILTER_READING);
+        if (inProgress.isEmpty()) {
+            continueCard.setVisibility(GONE);
+            continueCard.setTag(null);
+            return;
+        }
+        ReadingProgress item = inProgress.get(0);
+        continueCard.setTag(item);
+        continueCard.setVisibility(VISIBLE);
+        continueTitle.setText(item.title);
+        String page = item.pageCount > 0
+                ? "Page " + Math.min(item.page + 1, item.pageCount) + " of " + item.pageCount
+                : "Ready to continue";
+        continueDetails.setText(page + "  ·  " + item.percent() + "% complete");
+        continueProgress.setProgress(item.percent());
+        continueCover.setContentDescription(getResources().getString(
+                R.string.cover_description, item.title));
+        bindCover(continueCover, item);
+        continueCard.setAlpha(item.available ? 1f : 0.62f);
+        continueAction.setText(item.available ? "RESUME  ›" : "UNAVAILABLE");
     }
 
     public boolean handleBack() {
