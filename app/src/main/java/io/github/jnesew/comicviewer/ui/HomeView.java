@@ -86,6 +86,7 @@ public final class HomeView extends FrameLayout {
     private final TextView filterButton;
     private final TextView viewButton;
     private final TextView folderStatus;
+    private final TextView collectionCount;
     private final Runnable hideFolderStatus;
     private final LinearLayout emptyState;
     private final TextView emptyTitle;
@@ -138,7 +139,9 @@ public final class HomeView extends FrameLayout {
         header.addView(headerBack, new LinearLayout.LayoutParams(
                 Ui.dp(context, 48), Ui.dp(context, 58)));
 
-        headerTitle = Ui.text(context, context.getString(R.string.library_title), 24, Ui.TEXT);
+        headerTitle = Ui.text(context, "Manga Shelf", 26, Ui.TEXT);
+        Ui.bold(headerTitle);
+        headerTitle.setLetterSpacing(-0.025f);
         headerTitle.setSingleLine(true);
         headerTitle.setEllipsize(TextUtils.TruncateAt.END);
         header.addView(headerTitle, new LinearLayout.LayoutParams(0, Ui.dp(context, 58), 1f));
@@ -186,7 +189,7 @@ public final class HomeView extends FrameLayout {
 
         LinearLayout controls = new LinearLayout(context);
         controls.setGravity(Gravity.CENTER_VERTICAL);
-        controls.setPadding(Ui.dp(context, 16), Ui.dp(context, 6), Ui.dp(context, 16), Ui.dp(context, 12));
+        controls.setPadding(Ui.dp(context, 16), Ui.dp(context, 4), Ui.dp(context, 16), Ui.dp(context, 10));
         sortButton = selectorButton(context);
         sortButton.setContentDescription(context.getString(R.string.library_sort_menu));
         sortButton.setOnClickListener(this::showSortMenu);
@@ -210,6 +213,20 @@ public final class HomeView extends FrameLayout {
         viewParams.leftMargin = Ui.dp(context, 10);
         controls.addView(viewButton, viewParams);
         chrome.addView(controls, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout collectionHeader = new LinearLayout(context);
+        collectionHeader.setGravity(Gravity.CENTER_VERTICAL);
+        collectionHeader.setPadding(Ui.dp(context, 18), Ui.dp(context, 2), Ui.dp(context, 18), Ui.dp(context, 10));
+        TextView collectionLabel = Ui.text(context, "YOUR COLLECTION", 11, Ui.TEXT_MUTED);
+        Ui.bold(collectionLabel);
+        collectionLabel.setLetterSpacing(0.12f);
+        collectionHeader.addView(collectionLabel, new LinearLayout.LayoutParams(0, Ui.dp(context, 24), 1f));
+        collectionCount = Ui.text(context, "", 12, Ui.ACCENT);
+        Ui.bold(collectionCount);
+        collectionHeader.addView(collectionCount, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(context, 24)));
+        chrome.addView(collectionHeader, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         folderStatus = Ui.text(context, "", 12, Ui.TEXT_MUTED);
@@ -318,6 +335,8 @@ public final class HomeView extends FrameLayout {
         }
         adapter.notifyDataSetChanged();
         boolean empty = showingSeriesGrid() ? seriesRows.isEmpty() : rows.isEmpty();
+        int visibleCount = showingSeriesGrid() ? seriesRows.size() : rows.size();
+        collectionCount.setText(visibleCount + (visibleCount == 1 ? " TITLE" : " TITLES"));
         emptyState.setVisibility(empty ? VISIBLE : GONE);
         grid.setVisibility(empty ? GONE : VISIBLE);
         if (empty && (!query.trim().isEmpty() || !LibraryDatabase.FILTER_ALL.equals(filter))) {
@@ -519,7 +538,7 @@ public final class HomeView extends FrameLayout {
             case LibraryDatabase.FILTER_FAVORITES -> R.string.filter_favorites;
             default -> R.string.filter_all;
         };
-        sortButton.setText(getResources().getString(sortLabel) + " ⌄");
+        sortButton.setText(getResources().getString(sortLabel) + "  ▾");
         filterButton.setText(filterLabel);
         viewButton.setText(VIEW_SERIES.equals(viewMode)
                 ? R.string.library_view_series : R.string.library_view_titles);
@@ -558,7 +577,7 @@ public final class HomeView extends FrameLayout {
         button.setClickable(true);
         button.setFocusable(true);
         button.setBackground(Ui.rounded(
-                Color.TRANSPARENT, Ui.dp(context, 12), Ui.TEXT_MUTED, Ui.dp(context, 1)));
+                Ui.SURFACE, Ui.dp(context, 14), Ui.SURFACE_HIGH, Ui.dp(context, 1)));
         return button;
     }
 
@@ -788,13 +807,14 @@ public final class HomeView extends FrameLayout {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setClickable(true);
         root.setFocusable(true);
-        root.setPadding(0, 0, 0, Ui.dp(context, 2));
+        root.setPadding(Ui.dp(context, 7), Ui.dp(context, 7), Ui.dp(context, 7), Ui.dp(context, 10));
+        root.setBackground(Ui.rounded(Ui.SURFACE, Ui.dp(context, 18), Ui.SURFACE_HIGH, Ui.dp(context, 1)));
 
         FrameLayout coverFrame = new FrameLayout(context);
         ImageView cover = new ImageView(context);
         cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
         cover.setClipToOutline(true);
-        cover.setBackground(Ui.rounded(Ui.SURFACE, Ui.dp(context, 12), Ui.SURFACE_HIGH,
+        cover.setBackground(Ui.rounded(Ui.SURFACE_HIGH, Ui.dp(context, 13), Ui.SURFACE_HIGH,
                 Ui.dp(context, 1)));
         coverFrame.addView(cover, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -807,15 +827,15 @@ public final class HomeView extends FrameLayout {
                 Color.argb(218, 13, 16, 21), Ui.dp(context, 22), Ui.TEXT_MUTED, Ui.dp(context, 1)));
         FrameLayout.LayoutParams favoriteParams = new FrameLayout.LayoutParams(
                 Ui.dp(context, 44), Ui.dp(context, 44), Gravity.TOP | Gravity.END);
-        favoriteParams.topMargin = Ui.dp(context, 7);
-        favoriteParams.rightMargin = Ui.dp(context, 7);
+        favoriteParams.topMargin = Ui.dp(context, 6);
+        favoriteParams.rightMargin = Ui.dp(context, 6);
         coverFrame.addView(favorite, favoriteParams);
         root.addView(coverFrame, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(context, density.coverHeightDp)));
 
         LinearLayout titleRow = new LinearLayout(context);
         titleRow.setGravity(Gravity.TOP);
-        titleRow.setPadding(0, Ui.dp(context, 8), 0, Ui.dp(context, 4));
+        titleRow.setPadding(Ui.dp(context, 2), Ui.dp(context, 9), Ui.dp(context, 2), Ui.dp(context, 4));
         titleRow.setMinimumHeight(Ui.dp(context, density.titleRowHeightDp));
         TextView title = Ui.text(context, "", density.titleTextSp, Ui.TEXT);
         Ui.bold(title);
@@ -850,7 +870,7 @@ public final class HomeView extends FrameLayout {
         TextView details = Ui.text(context, "", density.detailTextSp, Ui.TEXT_MUTED);
         details.setSingleLine(true);
         details.setEllipsize(TextUtils.TruncateAt.END);
-        details.setPadding(0, Ui.dp(context, 7), 0, 0);
+        details.setPadding(Ui.dp(context, 2), Ui.dp(context, 7), 0, 0);
         root.addView(details, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(context, density.detailHeightDp)));
         return new CardHolder(root, cover, favorite, title, options, progress, details);
