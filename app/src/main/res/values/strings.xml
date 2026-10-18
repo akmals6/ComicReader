@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ComicViewer</string>
+    <string name="app_name">Manga Shelf</string>
 
     <string name="library_title">Library</string>
     <string name="reader_retry">Retry</string>
