@@ -16,7 +16,7 @@ public final class Ui {
     public static final int SURFACE_HIGH = Color.rgb(36, 41, 50);
     public static final int TEXT = Color.rgb(244, 247, 255);
     public static final int TEXT_MUTED = Color.rgb(177, 185, 199);
-    public static final int ACCENT = Color.rgb(155, 190, 255);
+    public static final int ACCENT = Color.rgb(31, 186, 214);
 
     private Ui() {}
 
